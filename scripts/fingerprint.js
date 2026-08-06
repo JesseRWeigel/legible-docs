@@ -26,6 +26,7 @@ import { extractPdf, pdfToHTML } from '../src/pdf/extract.js';
 import { parseColor, contrastRatio, requiredRatio, isLargeText } from '../src/color.js';
 import { repairPair, shadeBand } from '../src/repair.js';
 import { classifyImage } from '../src/alt.js';
+import { findPathLeak } from './pathleak.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CORPUS = path.join(HERE, '..', 'corpus');
@@ -208,10 +209,13 @@ function main() {
   const out = { schema: 'legible-docs/fingerprint/1', documents: entries, probes: probes() };
   const text = JSON.stringify(out, null, 2);
   // A path leaking in would make the fingerprint track the checkout instead of the code, so
-  // the script refuses to emit one rather than letting sabotage.py trust it.
-  const leak = text.match(/(\/home\/|\/tmp\/|[A-Za-z]:\\\\|\/Users\/|file:\/\/)/);
+  // the script refuses to emit one rather than letting sabotage.py trust it. The detection
+  // lives in scripts/pathleak.js so it can be unit tested; inline here it was the one guard in
+  // this project that nothing covered.
+  const leak = findPathLeak(text);
   if (leak) {
-    console.error(`fingerprint: refusing to emit, output contains a filesystem path near ${JSON.stringify(leak[0])}`);
+    console.error(`fingerprint: refusing to emit, output contains a ${leak.name} `
+      + `at offset ${leak.index}: ${JSON.stringify(leak.match)}`);
     process.exitCode = 1;
     return;
   }

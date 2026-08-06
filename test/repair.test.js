@@ -161,3 +161,32 @@ test('the band gives up rather than returning one that hides the text', () => {
   assert.equal(band.ok, false);
   assert.equal(band.hex, '#ffffff', 'no band is better than a band that breaks the text');
 });
+
+test('the search stops at the first visible band instead of hunting for a darker one', () => {
+  // A shading band is a subtle variation on the page colour. The search walks away from the
+  // page in small steps and stops as soon as the band is visible, whether or not the text
+  // still passes on it.
+  //
+  // Without that stop the loop keeps going and can find a "band" far down the range that
+  // satisfies both numbers by being a completely different colour. On a #323232 page it
+  // returns #999999, a light grey block at 4.5:1 against the page. That is a colour inversion
+  // rather than paragraph shading, and both of its measured numbers look fine.
+  const dark = shadeBand(c('#323232'), c('#323232'), 4.5);
+  assert.equal(dark.ok, false, `expected no band, got ${dark.hex} at ${dark.bandContrast}:1 against the page`);
+
+  // The general property, over a spread of page and text colours: any band that IS returned
+  // has to stay near the page. 1.5:1 is far looser than the bands actually chosen and still
+  // rules out an inversion by an order of magnitude.
+  let returned = 0;
+  for (let page = 0; page <= 255; page += 5) {
+    for (let text = 0; text <= 255; text += 5) {
+      const band = shadeBand({ r: page, g: page, b: page, a: 1 }, { r: text, g: text, b: text, a: 1 }, 4.5);
+      if (!band.ok) continue;
+      returned += 1;
+      assert.ok(band.bandContrast < 1.5,
+        `page #${page.toString(16)} text #${text.toString(16)}: band ${band.hex} sits at `
+        + `${band.bandContrast.toFixed(2)}:1 against the page, which is a block and not shading`);
+    }
+  }
+  assert.ok(returned > 100, `only ${returned} band(s) were returned, the sweep proved little`);
+});

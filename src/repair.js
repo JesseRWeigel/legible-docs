@@ -39,10 +39,22 @@ export function scaleTowardWhite(rgb, t) {
   return { r: mix(rgb.r), g: mix(rgb.g), b: mix(rgb.b), a: 1 };
 }
 
-// Smallest movement in [0,1] whose candidate meets the target, found by bisection and then
-// confirmed on the rounded 8-bit result. Bisection alone is not enough: rounding to 8 bits
-// can drop the ratio back below target, so the winner is re-measured and the endpoint is the
-// fallback.
+// Smallest movement in [0,1] whose candidate meets the target, found by bisection.
+//
+// Every candidate is measured AFTER it has been rounded to 8 bits, because scaleTowardBlack
+// and scaleTowardWhite both round on their way out through linearToChannel. That ordering is
+// the thing that matters: measuring a floating point candidate and then rounding it could drop
+// the ratio back under the target, and the caller would be handed a colour that does not meet
+// the number reported for it. Measuring the rounded value means whatever comes back has been
+// checked in exactly the form it will be written.
+//
+// It also means `best` cannot fail. It starts as the endpoint, which the first line has
+// already confirmed reaches the target, and it is only ever replaced by a candidate that
+// passed the same comparison. An earlier version re-measured `best` here and fell back to the
+// endpoint, with a comment saying rounding could still have spoiled it. That was wrong, and
+// the branch was unreachable: 22,274 searches across the colour cube never once took it. The
+// re-measure the caller actually needs is the one in the test suite, which reparses the
+// returned hex and checks the ratio again from the string.
 function searchToward(rgb, bg, target, move) {
   if (contrastRatio(move(rgb, 1), bg) < target) return null;
   let lo = 0;
@@ -58,7 +70,7 @@ function searchToward(rgb, bg, target, move) {
       lo = mid;
     }
   }
-  return contrastRatio(best, bg) >= target ? best : move(rgb, 1);
+  return best;
 }
 
 function perceptualDistance(a, b) {

@@ -116,6 +116,47 @@ test('reading order beats stream order against the hand written ground truth', (
     `column aware reflow still has ${reading.summary.readingOrder.inversions} inverted pairs`);
 });
 
+test('within a column, runs are ordered by position and not by the content stream', () => {
+  // The corpus PDF alternates between the two columns but emits each column's own lines top to
+  // bottom, so grouping into columns alone is enough to fix it. That leaves the per column sort
+  // untested, and a PDF exporter that emits a column bottom to top is entirely ordinary.
+  //
+  // This builds a one column page whose lines are drawn in reverse and asserts the reading
+  // order comes back top to bottom.
+  const lines = ['First line of the notice.', 'Second line of the notice.',
+    'Third line of the notice.', 'Fourth line of the notice.'];
+  const ops = ['1 1 1 rg 0 0 612 792 re f'];
+  // Drawn last line first.
+  lines.slice().reverse().forEach((text, i) => {
+    const y = 700 - (lines.length - 1 - i) * 14;
+    ops.push(`BT /F1 10 Tf 0 g 1 0 0 1 54 ${y} Tm (${text}) Tj ET`);
+  });
+  const content = ops.join('\n');
+  const objs = [
+    '1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n',
+    '2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n',
+    '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n',
+    '4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n',
+    `5 0 obj\n<< /Length ${content.length} >>\nstream\n${content}\nendstream\nendobj\n`
+  ];
+  const pdf = Buffer.from(`%PDF-1.4\n${objs.join('')}trailer\n<< /Size 6 /Root 1 0 R >>\n%%EOF\n`, 'latin1');
+
+  const page = extractPdf(pdf).pages[0];
+  assert.equal(page.textRuns, 4);
+  assert.equal(page.columns.length, 1, 'this fixture is one column');
+  assert.ok(page.streamOrderInversions > 0,
+    'the fixture is supposed to be drawn in reverse, so stream order must disagree with reading order');
+  assert.deepEqual(page.readingOrder.map((r) => r.text), lines,
+    'the reading order must be top to bottom regardless of the order the lines were drawn in');
+  // And the reflow carries that order through into the HTML.
+  const html = pdfToHTML(extractPdf(pdf), 'reversed.pdf');
+  const positions = lines.map((l) => html.indexOf(l));
+  assert.ok(positions.every((p) => p >= 0), 'every line should survive the reflow');
+  for (let i = 1; i < positions.length; i += 1) {
+    assert.ok(positions[i] > positions[i - 1], `line ${i} appears out of order in the reflow`);
+  }
+});
+
 test('the PDF text carries its real colours into the contrast measurement', () => {
   const html = pdfToHTML(extractPdf(buffer()), 'notice.pdf');
   const audit = auditDocument(html);

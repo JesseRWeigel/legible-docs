@@ -238,6 +238,16 @@ step "8. privacy"
 judge "privacy scan with a positive control" python3 scripts/privacy_scan.py --root .
 
 # ---------------------------------------------------------------------------------------
+step "8b. the sabotage harness is still live"
+# ---------------------------------------------------------------------------------------
+# The full run takes around half an hour, which is too slow to put in front of every commit.
+# What is checked here is that each of its patch anchors still matches exactly one place in the
+# file it targets. An anchor that has rotted turns its sabotage into a no-op, and a no-op
+# sabotage passes gate 1 by doing nothing, which is the exact failure the three-gate rule
+# exists to catch. Run the whole thing with: python3 scripts/sabotage.py
+judge "sabotage anchors all still match" python3 scripts/sabotage.py --check-anchors
+
+# ---------------------------------------------------------------------------------------
 step "9. the deploy workflow will not wedge"
 # ---------------------------------------------------------------------------------------
 WF=.github/workflows/pages.yml

@@ -124,8 +124,16 @@ test('an already accessible document is not made worse', () => {
   assert.equal(byTag(parseHTML(result.html), 'table').length, 1, 'a data table must not be unwrapped');
   assert.equal(byTag(parseHTML(result.html), 'th').length, 3);
   // Its described image keeps the description the author wrote.
-  const img = byTag(parseHTML(result.html), 'img')[0];
-  assert.match(img.attrs.alt, /ramp on the left/);
+  const images = byTag(parseHTML(result.html), 'img');
+  const described = images.find((i) => (i.attrs.src || '').includes('library-front'));
+  assert.ok(described, 'the photograph should still be in the output');
+  assert.match(described.attrs.alt, /ramp on the left/);
+  // And its decorative divider keeps its empty alt. An empty alt is correct markup here, and a
+  // remediation that "helpfully" filled it in would be inventing a description for a rule.
+  const decorative = images.find((i) => (i.attrs.src || '').includes('section-rule'));
+  assert.ok(decorative, 'the decorative rule should still be in the output');
+  assert.equal(decorative.attrs.alt, '');
+  assert.equal(decorative.attrs['data-lgb-alt-status'], 'declared-decorative');
 });
 
 test('the plain language summary is added beside the original, never over it', () => {

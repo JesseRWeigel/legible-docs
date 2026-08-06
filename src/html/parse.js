@@ -111,8 +111,13 @@ export function parseHTML(html) {
     if (!/^[a-z][a-z0-9-]*$/.test(tag)) { pushText(html.slice(lt, end + 1)); i = end + 1; continue; }
     const attrs = sp === -1 ? {} : parseAttributes(body.slice(sp));
 
+    // Implicit closing has to repeat, not fire once. In `<tr><td>a<td>b<tr>` the second <tr>
+    // has to close the open <td> AND the open <tr>. Popping a single level left the new row
+    // nested inside the previous one, which turned a two row table into a three row tree and
+    // scrambled the column order that the reading order measurement depends on.
     const closes = IMPLICIT_CLOSE[tag] || [];
-    if (cur.type === 'element' && (closes.includes(cur.tag) || (cur.tag === 'p' && BLOCK_CLOSES_P.has(tag)))) {
+    while (cur.type === 'element'
+      && (closes.includes(cur.tag) || (cur.tag === 'p' && BLOCK_CLOSES_P.has(tag)))) {
       cur = cur.parent;
     }
 

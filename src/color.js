@@ -139,9 +139,17 @@ export function composite(over, under) {
   };
 }
 
-// WCAG 1.4.3: 18pt (24px) or 14pt (18.66px) bold and larger is "large text" at 3:1.
-export const LARGE_TEXT_PX = 24;
-export const LARGE_TEXT_BOLD_PX = 18.66;
+// WCAG 1.4.3 large text: 18pt, or 14pt when bold. WCAG states the thresholds in points, and
+// CSS defines 1pt as 1/72 inch against a 96dpi reference, so the conversion is exact:
+// 18pt = 24px and 14pt = 18.6666...px.
+//
+// Many checkers round the bold threshold down to 18.66px. That rounding is in the wrong
+// direction for this tool: it lets bold text at 13.995pt claim the 3:1 large-text allowance
+// when WCAG asks for 4.5:1. The exact value is used instead, so a borderline run is held to
+// the stricter requirement.
+export const PX_PER_PT = 96 / 72;
+export const LARGE_TEXT_PX = 18 * PX_PER_PT;
+export const LARGE_TEXT_BOLD_PX = 14 * PX_PER_PT;
 
 export function isLargeText(fontSizePx, fontWeight) {
   const weight = Number(fontWeight) || 400;

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Legible Docs</title>
+<style>
+  body {
+    font-family: 'Atkinson Hyperlegible', Verdana, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #1a1a1a;
+    background: #ffffff;
+    width: 21rem;
+    margin: 0;
+    padding: 1rem;
+  }
+  h1 { font-size: 1.15rem; margin: 0 0 0.6rem 0; }
+  fieldset { border: 2px solid #595959; margin: 0 0 0.8rem 0; padding: 0.6rem 0.8rem; }
+  legend { font-weight: 700; padding: 0 0.3rem; }
+  label { display: block; margin: 0.2rem 0; }
+  button {
+    font: inherit;
+    background: #1a3d6d;
+    color: #ffffff;
+    border: 2px solid #14243d;
+    padding: 0.5rem 0.9rem;
+    margin-right: 0.4rem;
+    cursor: pointer;
+  }
+  button.secondary { background: #ffffff; color: #14243d; }
+  button:focus-visible { outline: 3px solid #b34700; outline-offset: 2px; }
+  #report { margin-top: 0.9rem; border-top: 2px solid #595959; padding-top: 0.6rem; }
+  #report dl { display: grid; grid-template-columns: 1fr auto; gap: 0.15rem 0.6rem; margin: 0; }
+  #report dt { margin: 0; }
+  #report dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; }
+  .bad { color: #8a1c1c; font-weight: 700; }
+  .good { color: #17532b; font-weight: 700; }
+  .note { font-size: 0.9em; color: #3d3d3d; }
+</style>
+</head>
+<body>
+<h1>Legible Docs</h1>
+
+<fieldset>
+  <legend>Typeface</legend>
+  <label><input type="radio" name="face" value="atkinson" checked> Atkinson Hyperlegible</label>
+  <label><input type="radio" name="face" value="opendyslexic"> OpenDyslexic</label>
+  <p class="note">Each face is used only if it is installed on this computer. The extension does
+  not download fonts, so it works offline and sends nothing anywhere.</p>
+</fieldset>
+
+<button id="apply">Make this readable</button>
+<button id="revert" class="secondary">Undo</button>
+
+<div id="report" hidden>
+  <dl id="numbers"></dl>
+  <p id="caveat" class="note"></p>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>

@@ -6,8 +6,13 @@ function escapeText(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+// `>` is escaped as well, which HTML does not require inside a quoted attribute value. It is
+// required here because parse.js finds a tag's end with the next `>` and does not track quote
+// state, so an unescaped `>` in an attribute would end the tag early. The remediated document
+// gets re-parsed and re-audited by this same parser, and without this the second audit would
+// measure a different tree than the one that was written.
 function escapeAttr(s) {
-  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 export function serialize(node) {

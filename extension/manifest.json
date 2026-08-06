@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Legible Docs",
+  "version": "1.0.0",
+  "description": "Reflow a public notice, school letter, or benefit form so it can actually be read, and report what is still wrong.",
+  "permissions": ["activeTab", "scripting"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Legible Docs"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["lib/legible-core.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

@@ -100,9 +100,13 @@ export function repairPair(fg, bg, target) {
     };
   }
 
-  // The foreground cannot reach the target against this background from either end, which
-  // happens for mid greys: #808080 tops out at 3.95:1 against both black and white. Move the
-  // background away from the text as well.
+  // The foreground cannot reach the target against this background from either end. Whether
+  // that is possible depends on the target. At 4.5:1 it never happens: a background needs
+  // relative luminance above 0.1833 for black text to fail and below 0.175 for white text to
+  // fail, and no colour satisfies both, so this branch is unreachable at the default target.
+  // At 7:1 it is reachable, and #808080 (relative luminance 0.2159) is an example: black on it
+  // measures 5.32:1 and white on it measures 3.95:1, so neither endpoint gets there. Then the
+  // background has to move as well.
   const bgLighter = searchToward(bg, fg, target, scaleTowardWhite);
   const bgDarker = searchToward(bg, fg, target, scaleTowardBlack);
   const bgPick = relativeLuminance(bg) >= relativeLuminance(fg) ? (bgLighter || bgDarker) : (bgDarker || bgLighter);

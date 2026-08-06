@@ -195,8 +195,14 @@ html.lgb-on body {
   padding: 1.5rem !important;
   hyphens: none !important;
 }
+/* Unlike the CLI, the extension does not delete the author stylesheet, so every property that
+   matters has to be overridden here. font-size is the one that is easy to forget: setting it
+   on <body> alone leaves a rule like .footer { font-size: 9px } applying to descendants, and
+   the reflowed page still has 9px text in it. Caught by scripts/browser_check.js, which
+   measured five runs under 16px on a page this stylesheet claimed to have fixed. */
 html.lgb-on body *:not(.lgb-summary):not(.lgb-summary *) {
   font-family: ${family} !important;
+  font-size: inherit !important;
   text-align: left !important;
   line-height: 1.5 !important;
   letter-spacing: 0.12em !important;
@@ -206,6 +212,15 @@ html.lgb-on body *:not(.lgb-summary):not(.lgb-summary *) {
   float: none !important;
   hyphens: none !important;
 }
+/* Headings get their size back. The :not() pair is repeated so these selectors carry the same
+   class count as the rule above and win on the type count, which is the only way an !important
+   declaration beats another !important declaration. */
+html.lgb-on body h1:not(.lgb-summary):not(.lgb-summary *) { font-size: 2em !important; }
+html.lgb-on body h2:not(.lgb-summary):not(.lgb-summary *) { font-size: 1.5em !important; }
+html.lgb-on body h3:not(.lgb-summary):not(.lgb-summary *) { font-size: 1.25em !important; }
+html.lgb-on body h4:not(.lgb-summary):not(.lgb-summary *),
+html.lgb-on body h5:not(.lgb-summary):not(.lgb-summary *),
+html.lgb-on body h6:not(.lgb-summary):not(.lgb-summary *) { font-size: 1.1em !important; }
 html.lgb-on p, html.lgb-on li, html.lgb-on td, html.lgb-on th, html.lgb-on blockquote {
   max-width: 66ch;
   padding: 0.35em 0.6em;

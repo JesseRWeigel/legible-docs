@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>legible-docs, measured</title>
+<style>
+  :root { color-scheme: light dark; --ink: #1a1a1a; --page: #ffffff; --band: #eef1f5;
+          --rule: #595959; --good: #17532b; --bad: #8a1c1c; --muted: #3d3d3d; }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #f2f2f2; --page: #14171c; --band: #1e232b; --rule: #8e97a3;
+            --good: #7fd6a0; --bad: #ff9f9f; --muted: #c2c8d0; }
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Atkinson Hyperlegible', Verdana, 'DejaVu Sans', sans-serif;
+    font-size: 18px; line-height: 1.6; letter-spacing: 0.01em;
+    color: var(--ink); background: var(--page);
+    margin: 0; padding: 2rem 1.25rem 5rem; text-align: left; hyphens: none;
+  }
+  main { max-width: 68ch; margin: 0 auto; }
+  h1 { font-size: 1.9rem; line-height: 1.25; margin: 0 0 0.4em; }
+  h2 { font-size: 1.35rem; line-height: 1.3; margin: 2.2em 0 0.5em; border-bottom: 2px solid var(--rule); padding-bottom: 0.2em; }
+  h3 { font-size: 1.1rem; margin: 1.6em 0 0.4em; }
+  p, li { max-width: 68ch; }
+  .lede { font-size: 1.05rem; color: var(--muted); }
+  code { font-family: ui-monospace, 'DejaVu Sans Mono', monospace; font-size: 0.9em;
+         background: var(--band); padding: 0.1em 0.35em; border-radius: 3px; }
+  pre { background: var(--band); padding: 0.9em 1em; overflow-x: auto; border-left: 4px solid var(--rule); }
+  pre code { background: none; padding: 0; }
+  .scroll { overflow-x: auto; margin: 1em 0; border: 1px solid var(--rule); }
+  table { border-collapse: collapse; width: 100%; min-width: 34rem; }
+  caption { text-align: left; padding: 0.5em 0.7em; font-weight: 700; background: var(--band); }
+  th, td { border: 1px solid var(--rule); padding: 0.4em 0.65em; text-align: left; vertical-align: top; }
+  thead th { background: var(--band); }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .good { color: var(--good); font-weight: 700; }
+  .bad { color: var(--bad); font-weight: 700; }
+  .swatch { display: inline-block; min-width: 2.4em; text-align: center; padding: 0.15em 0.4em;
+            border: 1px solid var(--rule); font-weight: 700; }
+  #verdict { border: 3px solid var(--rule); padding: 0.9em 1.1em; margin: 1.2em 0; background: var(--band); }
+  #verdict.pass { border-color: var(--good); }
+  #verdict.fail { border-color: var(--bad); }
+  .cannot { border-left: 6px solid var(--bad); padding: 0.2em 0 0.2em 1em; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 2px solid var(--rule); color: var(--muted); font-size: 0.92rem; }
+  a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>legible-docs, measured</h1>
+
+<p class="lede">A command line tool and a browser extension that reflow public notices, school
+letters, and benefit forms for dyslexic and low vision readers, and report in numbers what they
+changed and what they could not.</p>
+
+<p>Every figure on this page was produced by running the tool over the corpus in the repository.
+The page is generated from that run by <code>scripts/build-docs.js</code>, and
+<code>scripts/verify.sh</code> rebuilds it and fails if it differs from the committed copy, so
+it cannot quietly go stale.</p>
+
+<div id="verdict" role="status">
+  <strong>Recheck:</strong> <span id="verdict-text">this page recomputes its own contrast
+  figures in your browser. If scripting is off, the numbers below are the ones published and
+  nothing has rechecked them.</span>
+</div>
+
+<h2>What it does to a document</h2>
+
+<p>The tool never removes or rewords the document's text. A benefit notice is a legal document
+and the wording is the thing being delivered. What changes is presentation: the typeface, the
+tracking, the line height, ragged right instead of justified, alternating paragraph shading,
+real headings instead of bold paragraphs, and colours moved until they meet contrast. An
+optional plain language summary from a local model is placed <em>alongside</em> the original,
+never over it, with a visible note saying a machine wrote it.</p>
+
+<div class="scroll">
+<table>
+  <caption>3 HTML documents, before and after remediation</caption>
+  <thead>
+    <tr>
+      <th scope="col">Document</th>
+      <th scope="col">Text runs</th>
+      <th scope="col">Failing before</th>
+      <th scope="col">Failing after</th>
+      <th scope="col">Lowest before</th>
+      <th scope="col">Lowest after</th>
+      <th scope="col">Order inversions before</th>
+      <th scope="col">after</th>
+      <th scope="col">Images needing a person</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <th scope="row">accessible-control.html</th>
+        <td>19</td>
+        <td class="good">0</td>
+        <td class="good">0</td>
+        <td>17.40:1</td>
+        <td class="good">17.40:1</td>
+        <td>n/a</td>
+        <td class="">n/a</td>
+        <td>0</td>
+      </tr>
+      <tr>
+        <th scope="row">benefit-notice.html</th>
+        <td>10</td>
+        <td class="bad">10</td>
+        <td class="good">0</td>
+        <td>1.61:1</td>
+        <td class="good">4.54:1</td>
+        <td>3</td>
+        <td class="good">0</td>
+        <td>1</td>
+      </tr>
+      <tr>
+        <th scope="row">school-letter.html</th>
+        <td>14</td>
+        <td class="bad">14</td>
+        <td class="good">0</td>
+        <td>1.90:1</td>
+        <td class="good">4.51:1</td>
+        <td>6</td>
+        <td class="good">0</td>
+        <td>1</td>
+      </tr>
+  </tbody>
+</table>
+</div>
+
+<p><code>accessible-control.html</code> is in the corpus on purpose. It already passes, and it
+is there so a check that flags everything cannot look like a check that works.</p>
+
+<h2>Reading order</h2>
+
+<p>The defect that looks fine on screen: two stories side by side in a layout table read, to a
+screen reader, as row one of the left story, row one of the right, row two of the left, and so
+on. The page looks right and linearises wrong. Each corpus document ships a hand written
+<code>.order.txt</code> listing its blocks in the order a person reads them aloud, and the
+measurement is the Kendall tau distance between that and the order the markup produces.</p>
+
+<div class="scroll">
+<table>
+  <caption>1 PDF, extracted and reflowed</caption>
+  <thead>
+    <tr>
+      <th scope="col">Page</th>
+      <th scope="col">Text runs</th>
+      <th scope="col">Columns</th>
+      <th scope="col">Content stream order, inverted pairs</th>
+      <th scope="col">After column aware reflow</th>
+      <th scope="col">Tagged structure</th>
+      <th scope="col">/Lang</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <th scope="row">public-notice.pdf p1</th>
+        <td>28</td>
+        <td>2</td>
+        <td>90 of 378</td>
+        <td class="good">0</td>
+        <td class="bad">missing</td>
+        <td class="bad">missing</td>
+      </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Contrast</h2>
+
+<p>The ratio is WCAG 2.1's: linearise each sRGB channel, weight them 0.2126, 0.7152 and 0.0722,
+then take <code>(lighter + 0.05) / (darker + 0.05)</code>. The linearisation matters. Drop it
+and <code>#767676</code> on white reads 2.05:1 instead of 4.54:1, which is the difference
+between failing a colour that passes and passing one that fails.</p>
+
+<div class="scroll">
+<table>
+  <caption>15 reference pairs, recomputed in your browser</caption>
+  <thead>
+    <tr><th scope="col">Pair</th><th scope="col" class="num">Published ratio</th><th scope="col">Recomputed here</th></tr>
+  </thead>
+  <tbody>
+      <tr data-fg="#000000" data-bg="#ffffff" data-ratio="21">
+        <td><span class="swatch" style="background:#ffffff;color:#000000">Aa</span> <code>#000000</code> on <code>#ffffff</code></td>
+        <td class="num">21.0000:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#767676" data-bg="#ffffff" data-ratio="4.5422">
+        <td><span class="swatch" style="background:#ffffff;color:#767676">Aa</span> <code>#767676</code> on <code>#ffffff</code></td>
+        <td class="num">4.5422:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#777777" data-bg="#ffffff" data-ratio="4.4781">
+        <td><span class="swatch" style="background:#ffffff;color:#777777">Aa</span> <code>#777777</code> on <code>#ffffff</code></td>
+        <td class="num">4.4781:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#949494" data-bg="#ffffff" data-ratio="3.0335">
+        <td><span class="swatch" style="background:#ffffff;color:#949494">Aa</span> <code>#949494</code> on <code>#ffffff</code></td>
+        <td class="num">3.0335:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#bfbfbf" data-bg="#f0f0f0" data-ratio="1.6136">
+        <td><span class="swatch" style="background:#f0f0f0;color:#bfbfbf">Aa</span> <code>#bfbfbf</code> on <code>#f0f0f0</code></td>
+        <td class="num">1.6136:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#bcbcbc" data-bg="#ffffff" data-ratio="1.8991">
+        <td><span class="swatch" style="background:#ffffff;color:#bcbcbc">Aa</span> <code>#bcbcbc</code> on <code>#ffffff</code></td>
+        <td class="num">1.8991:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#8fb4d9" data-bg="#ffffff" data-ratio="2.1653">
+        <td><span class="swatch" style="background:#ffffff;color:#8fb4d9">Aa</span> <code>#8fb4d9</code> on <code>#ffffff</code></td>
+        <td class="num">2.1653:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#1a1a1a" data-bg="#ffffff" data-ratio="17.4043">
+        <td><span class="swatch" style="background:#ffffff;color:#1a1a1a">Aa</span> <code>#1a1a1a</code> on <code>#ffffff</code></td>
+        <td class="num">17.4043:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#0000ff" data-bg="#ffffff" data-ratio="8.5925">
+        <td><span class="swatch" style="background:#ffffff;color:#0000ff">Aa</span> <code>#0000ff</code> on <code>#ffffff</code></td>
+        <td class="num">8.5925:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#008000" data-bg="#ffffff" data-ratio="5.1374">
+        <td><span class="swatch" style="background:#ffffff;color:#008000">Aa</span> <code>#008000</code> on <code>#ffffff</code></td>
+        <td class="num">5.1374:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#808080" data-bg="#000000" data-ratio="5.3172">
+        <td><span class="swatch" style="background:#000000;color:#808080">Aa</span> <code>#808080</code> on <code>#000000</code></td>
+        <td class="num">5.3172:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#0a0a0a" data-bg="#ffffff" data-ratio="19.7981">
+        <td><span class="swatch" style="background:#ffffff;color:#0a0a0a">Aa</span> <code>#0a0a0a</code> on <code>#ffffff</code></td>
+        <td class="num">19.7981:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#0b0b0b" data-bg="#ffffff" data-ratio="19.6826">
+        <td><span class="swatch" style="background:#ffffff;color:#0b0b0b">Aa</span> <code>#0b0b0b</code> on <code>#ffffff</code></td>
+        <td class="num">19.6826:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#3a3a3a" data-bg="#000000" data-ratio="1.8462">
+        <td><span class="swatch" style="background:#000000;color:#3a3a3a">Aa</span> <code>#3a3a3a</code> on <code>#000000</code></td>
+        <td class="num">1.8462:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+      <tr data-fg="#eef1f5" data-bg="#ffffff" data-ratio="1.1329">
+        <td><span class="swatch" style="background:#ffffff;color:#eef1f5">Aa</span> <code>#eef1f5</code> on <code>#ffffff</code></td>
+        <td class="num">1.1329:1</td>
+        <td class="recheck">not yet rechecked</td>
+      </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>The large text exception</h3>
+
+<p>WCAG asks for 4.5:1 normally and 3:1 for large text, where large means 18pt, or 14pt when
+bold. One threshold for everything is wrong in both directions. The thresholds are converted
+from points exactly, so 18pt is 24px and 14pt is 18.667px. Rounding the bold threshold down to
+18.66px, which several checkers do, lets bold text at 13.995pt claim an allowance it has not
+earned.</p>
+
+<div class="scroll">
+<table>
+  <caption>How the requirement is chosen</caption>
+  <thead>
+    <tr><th scope="col" class="num">Size</th><th scope="col" class="num">Weight</th><th scope="col">In points</th><th scope="col">Classified</th><th scope="col" class="num">Requires</th></tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td class="num">9px</td>
+        <td class="num">400</td>
+        <td>6.75pt</td>
+        <td>normal</td>
+        <td class="num">4.5:1</td>
+      </tr>
+      <tr>
+        <td class="num">11px</td>
+        <td class="num">400</td>
+        <td>8.25pt</td>
+        <td>normal</td>
+        <td class="num">4.5:1</td>
+      </tr>
+      <tr>
+        <td class="num">15.99px</td>
+        <td class="num">400</td>
+        <td>11.99pt</td>
+        <td>normal</td>
+        <td class="num">4.5:1</td>
+      </tr>
+      <tr>
+        <td class="num">16px</td>
+        <td class="num">400</td>
+        <td>12.00pt</td>
+        <td>normal</td>
+        <td class="num">4.5:1</td>
+      </tr>
+      <tr>
+        <td class="num">18.66px</td>
+        <td class="num">700</td>
+        <td>14.00pt</td>
+        <td>normal</td>
+        <td class="num">4.5:1</td>
+      </tr>
+      <tr>
+        <td class="num">18.67px</td>
+        <td class="num">700</td>
+        <td>14.00pt</td>
+        <td>large</td>
+        <td class="num">3.0:1</td>
+      </tr>
+      <tr>
+        <td class="num">23.99px</td>
+        <td class="num">400</td>
+        <td>17.99pt</td>
+        <td>normal</td>
+        <td class="num">4.5:1</td>
+      </tr>
+      <tr>
+        <td class="num">24px</td>
+        <td class="num">400</td>
+        <td>18.00pt</td>
+        <td>large</td>
+        <td class="num">3.0:1</td>
+      </tr>
+      <tr>
+        <td class="num">20px</td>
+        <td class="num">600</td>
+        <td>15.00pt</td>
+        <td>normal</td>
+        <td class="num">4.5:1</td>
+      </tr>
+      <tr>
+        <td class="num">20px</td>
+        <td class="num">700</td>
+        <td>15.00pt</td>
+        <td>large</td>
+        <td class="num">3.0:1</td>
+      </tr>
+      <tr>
+        <td class="num">32px</td>
+        <td class="num">400</td>
+        <td>24.00pt</td>
+        <td>large</td>
+        <td class="num">3.0:1</td>
+      </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>Alt text</h2>
+
+<p>An empty <code>alt</code> is the correct markup for a decorative image and a silent
+information loss on an informative one. A checker that flags every empty alt buries its real
+findings under one false positive per divider rule on the page, and a checker that accepts any
+alt at all passes <code>alt="image"</code>. So the tool sorts images into four outcomes, and it
+never writes a description for an image it cannot see.</p>
+
+<div class="scroll">
+<table>
+  <caption>How images are classified</caption>
+  <thead>
+    <tr><th scope="col">Source</th><th scope="col">alt</th><th scope="col">Other evidence</th><th scope="col">Outcome</th><th scope="col">Meaning</th></tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>a.jpg</code></td>
+        <td><em>no alt attribute</em></td>
+        <td></td>
+        <td class="bad">needs-human</td>
+        <td>flagged, no description invented</td>
+      </tr>
+      <tr>
+        <td><code>a.jpg</code></td>
+        <td><code>&quot;&quot;</code></td>
+        <td></td>
+        <td class="good">declared-decorative</td>
+        <td>author marked it decorative</td>
+      </tr>
+      <tr>
+        <td><code>a.jpg</code></td>
+        <td><code>&quot;image&quot;</code></td>
+        <td></td>
+        <td class="bad">needs-human</td>
+        <td>flagged, no description invented</td>
+      </tr>
+      <tr>
+        <td><code>a.jpg</code></td>
+        <td><code>&quot;a.jpg&quot;</code></td>
+        <td></td>
+        <td class="bad">needs-human</td>
+        <td>flagged, no description invented</td>
+      </tr>
+      <tr>
+        <td><code>seal.png</code></td>
+        <td><code>&quot;seal.png&quot;</code></td>
+        <td></td>
+        <td class="bad">needs-human</td>
+        <td>flagged, no description invented</td>
+      </tr>
+      <tr>
+        <td><code>a.jpg</code></td>
+        <td><code>&quot;ok&quot;</code></td>
+        <td></td>
+        <td class="bad">needs-human</td>
+        <td>flagged, no description invented</td>
+      </tr>
+      <tr>
+        <td><code>a.jpg</code></td>
+        <td><code>&quot;A ramp at the rear entrance&quot;</code></td>
+        <td></td>
+        <td class="good">described</td>
+        <td>kept, it says something</td>
+      </tr>
+      <tr>
+        <td><code>dot_clear.gif</code></td>
+        <td><em>no alt attribute</em></td>
+        <td></td>
+        <td class="good">auto-decorative</td>
+        <td>proved decorative from evidence</td>
+      </tr>
+      <tr>
+        <td><code>x.gif</code></td>
+        <td><em>no alt attribute</em></td>
+        <td>1px wide</td>
+        <td class="good">auto-decorative</td>
+        <td>proved decorative from evidence</td>
+      </tr>
+      <tr>
+        <td><code>x.gif</code></td>
+        <td><em>no alt attribute</em></td>
+        <td><code>role=presentation</code></td>
+        <td class="good">declared-decorative</td>
+        <td>author marked it decorative</td>
+      </tr>
+  </tbody>
+</table>
+</div>
+
+<h2>What this tool cannot check</h2>
+
+<div class="cannot">
+<ul>
+  <li><strong>It cannot see an image.</strong> No alt text is ever generated. An image with no
+  usable description is flagged in the output for a person to write, and the missing alt is
+  left missing so every other checker still reports it.</li>
+  <li><strong>It cannot read a scanned PDF.</strong> A page with no text layer is reported as
+  needing optical character recognition. No text is invented for it.</li>
+  <li><strong>It does not fetch external stylesheets.</strong> A colour that lives in a linked
+  CSS file is reported as unmeasured, with a warning naming the file.</li>
+  <li><strong>It does not evaluate at-rules.</strong> Colours inside <code>@media</code> or
+  <code>@supports</code> are skipped and warned about rather than guessed at.</li>
+  <li><strong>The command line tool has no browser.</strong> It implements a small CSS cascade
+  covering type, class, id, descendant and child selectors, inline styles and the old
+  presentational attributes. It does not do JavaScript, custom properties beyond simple
+  substitution, flexbox, grid, or any layout. The browser extension has a real engine and uses
+  <code>getComputedStyle</code>, so on the same document the two can disagree slightly and the
+  extension is the more accurate of the two.</li>
+  <li><strong>It cannot tell you whether the writing is any good.</strong> Contrast, spacing and
+  order are measurable. Whether a benefit notice makes sense to the person who received it is
+  not, and nothing here should be read as saying it does.</li>
+  <li><strong>The plain language summary is machine written and can be wrong.</strong> It is off
+  by default, it runs against a local model and never a hosted API, it is placed beside the
+  original text, and it carries a visible note saying so.</li>
+</ul>
+</div>
+
+<h2>Running it</h2>
+
+<pre><code>legible audit corpus/benefit-notice.html
+legible fix   corpus/benefit-notice.html --out readable.html --face atkinson
+legible fix   corpus/public-notice.pdf   --out readable.html --summary
+legible pdf-text corpus/public-notice.pdf</code></pre>
+
+<p>The browser extension is unpacked: load <code>extension/</code> in Chrome from
+<em>Manage extensions</em>, <em>Load unpacked</em>. It asks for <code>activeTab</code> and
+<code>scripting</code>, and nothing else. It makes no network request of any kind, which is
+asserted in the test suite rather than promised here, because a benefit notice is not something
+anybody should be uploading to a server to have it made readable.</p>
+
+<footer>
+<p>Catalog task CIVIC-044, from a public catalog of build ideas at
+<a href="https://github.com/JesseRWeigel/722-things-to-build">722-things-to-build</a>.
+MIT licensed. Generated from <code>scripts/fingerprint.js</code>; do not edit this file by hand,
+edit <code>scripts/build-docs.js</code> instead.</p>
+</footer>
+
+</main>
+
+<script>
+// Recompute every published contrast ratio, here, in the reader's browser, from the hex pair
+// in each row. A page that prints numbers it cannot reproduce should say so out loud.
+(function () {
+  function toLinear(c8) {
+    var c = c8 / 255;
+    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+  function luminance(hex) {
+    var h = hex.replace('#', '');
+    var r = parseInt(h.slice(0, 2), 16);
+    var g = parseInt(h.slice(2, 4), 16);
+    var b = parseInt(h.slice(4, 6), 16);
+    return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  }
+  function ratio(fg, bg) {
+    var a = luminance(fg), b = luminance(bg);
+    return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+  }
+
+  var rows = document.querySelectorAll('tr[data-fg]');
+  var checked = 0, mismatched = 0;
+  rows.forEach(function (row) {
+    var mine = ratio(row.dataset.fg, row.dataset.bg);
+    var published = parseFloat(row.dataset.ratio);
+    var cell = row.querySelector('.recheck');
+    var ok = Math.abs(mine - published) < 5e-4;
+    checked += 1;
+    if (!ok) mismatched += 1;
+    cell.textContent = ok ? mine.toFixed(4) + ':1, matches' : mine.toFixed(4) + ':1, DOES NOT MATCH';
+    cell.className = 'recheck ' + (ok ? 'good' : 'bad');
+  });
+
+  var box = document.getElementById('verdict');
+  var text = document.getElementById('verdict-text');
+  var result = { checked: checked, mismatched: mismatched };
+  if (checked === 0) {
+    box.className = 'fail';
+    text.textContent = 'No contrast rows were found on this page, so nothing was rechecked.';
+  } else if (mismatched === 0) {
+    box.className = 'pass';
+    text.textContent = 'All ' + checked + ' published contrast ratios were recomputed in this '
+      + 'browser and all ' + checked + ' match.';
+  } else {
+    box.className = 'fail';
+    text.textContent = mismatched + ' of ' + checked + ' published contrast ratios did NOT '
+      + 'match when recomputed in this browser. Do not trust the numbers above.';
+  }
+  box.setAttribute('data-recheck', JSON.stringify(result));
+}());
+</script>
+
+</body>
+</html>

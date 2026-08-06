@@ -1,0 +1,56 @@
+name: Publish the measured report to Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One concurrency group per run, deliberately. A shared `group: pages` means a single wedged
+# run holds the lock and every later deploy queues behind it, sometimes without being
+# cancellable, so the published page silently stops updating.
+concurrency:
+  group: pages-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  verify-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Chromium for the browser check
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser || sudo apt-get install -y chromium
+
+      # The page is only published if the whole verify passes, including the step that rebuilds
+      # docs/index.html from the current measurements and fails when it differs from the
+      # committed copy. Publishing a page that has drifted from the numbers behind it would be
+      # worse than not publishing one.
+      - name: Verify
+        run: bash scripts/verify.sh
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: verify-and-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

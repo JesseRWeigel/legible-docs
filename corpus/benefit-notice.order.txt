@@ -1,0 +1,13 @@
+# Hand written reading order for corpus/benefit-notice.html.
+# The seal and the title sit in one layout table, the two explanation columns in another.
+# A reader takes the left column to the end before starting the right column.
+notice of action on your benefits
+what we decided
+your household benefit amount changes beginning the first day of next month
+the change applies to every person listed on the case
+what you have to do
+you do not have to do anything for the new amount to start
+if you ask for a hearing before the effective date
+how to ask for a hearing
+call the number on the back of your benefits card
+form 2350-b rev 03/2019

@@ -1,0 +1,11 @@
+# Hand written reading order for corpus/public-notice.pdf.
+# Two columns. A person reads the left column to the bottom, then the right column. The
+# content stream draws one line of the left column, then one line of the right, all the way
+# down, so anything that trusts the stream order interleaves the two.
+city of riverton notice of public hearing
+the city council will hold a public hearing on the
+the proposed schedule raises the base monthly
+written comments may be filed with the city clerk
+the hearing takes place in the council chamber on
+a sign language interpreter and a spanish language
+the full rate study, the current schedule, and the

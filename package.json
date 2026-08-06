@@ -1,0 +1,13 @@
+{
+  "name": "legible-docs",
+  "version": "1.0.0",
+  "description": "Measure and remediate documents for dyslexic and low-vision readers",
+  "type": "module",
+  "bin": { "legible": "./bin/legible.js" },
+  "scripts": {
+    "test": "node --test test/",
+    "verify": "bash scripts/verify.sh"
+  },
+  "license": "MIT",
+  "private": false
+}

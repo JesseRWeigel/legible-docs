@@ -1,0 +1,17 @@
+# Hand written reading order for corpus/school-letter.html.
+# One line per block, in the order a person reading the rendered page aloud would say them.
+# The two columns of the layout table are two separate stories: the left column is read top
+# to bottom first, then the right column, which is not the order the markup linearises in.
+hillside elementary school family bulletin
+september family bulletin
+announcements
+bus route changes take effect
+the cafeteria is moving to a four week menu cycle
+after school clubs open for registration
+dates to remember
+picture day is the second tuesday
+parent teacher conferences run over three afternoons
+the signature page for this bulletin is due back
+if you need help reading this letter
+call the school office and ask for the family liaison
+this bulletin is also posted on the school notice board

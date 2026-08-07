@@ -17,15 +17,27 @@ import { findPathLeak, PATH_LEAK_PATTERNS } from '../scripts/pathleak.js';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
 
+// The fixtures below are ASSEMBLED rather than written out. The repository privacy scan reads
+// every tracked file, this one included, and a literal home directory path here is
+// indistinguishable from a real leak. Exempting this file from the scan would also stop it
+// finding a real leak in this file, so the strings are built from fragments instead.
+//
+// The first attempt at this comment spelled the path out to explain the problem, and the scanner
+// flagged the comment. It was right to.
+const HOME = '/' + 'ho' + 'me';
+const USERS = '/' + 'Us' + 'ers';
+const TILDE = '~';
+
+
 test('a filesystem path in the text is found', () => {
   const cases = [
-    ['{"file": "/home/someone/projects/thing.html"}', 'unix home directory'],
-    ['/Users/someone/Documents/notice.pdf', 'macOS home directory'],
+    [`{"file": "${HOME}/someone/projects/thing.html"}`, 'unix home directory'],
+    [`${USERS}/someone/Documents/notice.pdf`, 'macOS home directory'],
     ['wrote /tmp/legible-abc123/out.html', 'temporary directory'],
     ['C:\\Users\\someone\\notice.html', 'Windows drive path'],
-    ['loaded file:///home/x/page.html', 'file URL'],
-    ['see ~/projects/legible-docs for more', 'tilde home directory'],
-    ['"path": "~/notes/thing.md"', 'tilde home directory']
+    [`loaded file://${HOME}/x/page.html`, 'file URL'],
+    [`see ${TILDE}/projects/legible-docs for more`, 'tilde home directory'],
+    [`"path": "${TILDE}/notes/thing.md"`, 'tilde home directory']
   ];
   for (const [text, expected] of cases) {
     const leak = findPathLeak(text);
@@ -93,7 +105,7 @@ test('the fingerprint refuses to emit output that carries a path', () => {
       '<html lang="en"><head><title>t</title><style>body{color:#1a1a1a;background:#fff;'
       + 'font-size:19px;line-height:1.6;letter-spacing:0.12em;text-align:left}</style></head>'
       + '<body><main><h1>A heading for this leaky document</h1>'
-      + '<p>The report was written to /home/someone/output/report.html by the last run, and '
+      + `<p>The report was written to ${HOME}/someone/output/report.html by the last run, and `
       + 'that absolute path is exactly what must never reach a fingerprint.</p></main></body></html>');
 
     let threw = false;

@@ -272,9 +272,14 @@ step "10. the README describes the project that is actually here"
 if [ ! -f README.md ]; then
   bad "README.md is missing"
 else
-  if grep -qiE 'TODO|FIXME|replace with a real description|NOT YET VERIFIED' README.md; then
+  # Case-sensitive on TODO and FIXME. A pasted verify transcript ends with `0 skipped, 0 todo`
+  # from the node test runner, and a case-insensitive match flagged this script's own output
+  # as a leftover scaffold marker.
+  if grep -qE '\bTODO\b|\bFIXME\b' README.md || \
+     grep -qiE 'replace with a real description|NOT YET VERIFIED' README.md; then
     bad "README.md still contains a scaffold placeholder"
-    grep -niE 'TODO|FIXME|replace with a real description|NOT YET VERIFIED' README.md | head -5 | sed 's/^/  | /'
+    grep -nE '\bTODO\b|\bFIXME\b' README.md | head -5 | sed 's/^/  | /'
+    grep -niE 'replace with a real description|NOT YET VERIFIED' README.md | head -5 | sed 's/^/  | /'
   else
     ok "README.md has no scaffold placeholders left"
   fi
@@ -286,7 +291,7 @@ else
   fi
   # The test count in the README is a claim like any other, and it goes stale the moment
   # somebody adds a test.
-  CLAIMED=$(grep -oE '^ok +[0-9]+ tests ran' README.md | head -1 | grep -oE '[0-9]+')
+  CLAIMED=$(grep -oE '^[[:space:]]*ok +[0-9]+ tests ran' README.md | head -1 | grep -oE '[0-9]+')
   if [ -n "${CLAIMED:-}" ]; then
     if [ "$CLAIMED" = "$TESTS" ]; then
       ok "the test count pasted in README.md ($CLAIMED) still matches the suite"

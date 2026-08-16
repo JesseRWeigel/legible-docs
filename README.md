@@ -4,6 +4,8 @@ A command line tool and a Chrome extension that reflow public notices, school le
 benefit forms for dyslexic and low vision readers, then report in numbers what they changed and
 what they could not.
 
+**[What it does to a document, measured →](https://jesserweigel.github.io/legible-docs/)**
+
 Catalog task `CIVIC-044`, from a public catalog of build ideas:
 https://github.com/JesseRWeigel/722-things-to-build
 

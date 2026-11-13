@@ -53,8 +53,11 @@ node bin/legible.js fix   corpus/public-notice.pdf   --out readable.html --face 
 node bin/legible.js pdf-text corpus/public-notice.pdf
 ```
 
-`fix` asserts its own results and exits nonzero if the document it just wrote still fails, so
-its exit code means something.
+`fix` checks preservation and contrast before publishing the result. A failed check leaves
+an existing output unchanged and creates no final output. A passing candidate is written to
+a temporary sibling and atomically renamed into place; write/rename errors return nonzero
+and clean up staging files. The published file has owner-only permissions. This atomic
+replacement does not promise durability across power loss or preserve destination metadata.
 
 The plain language summary needs a local Ollama running, and is off unless asked for:
 
@@ -177,6 +180,18 @@ passing check are indistinguishable in a log a week later.
   and verify rebuilds it and fails if it differs from the committed copy.
 
 ## Status
+
+2026-11-13: the CLI output-publication fix passes the unit suite and all four
+corpus audit/fix/re-audit flows, including independent measurement and privacy
+checks. The full verification run exits 1: 36 checks passed, but the browser check
+could not launch Chromium in the restricted runner (socket creation denied).
+Browser/extension verification is **not** claimed for this revision.
+
+```text
+  ok   146 tests ran, above the floor of 120
+```
+
+The following is the historical 2026-08-06 verification record, not a new run:
 
 Verified on 2026-08-06. `bash scripts/verify.sh`, exit code 0:
 

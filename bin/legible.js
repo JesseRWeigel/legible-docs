@@ -16,6 +16,7 @@ import { remediateHTML, textPreserved, REPAIR_TARGET } from '../src/remediate.js
 import { readGroundTruth } from '../src/readingorder.js';
 import { extractPdf, pdfToHTML } from '../src/pdf/extract.js';
 import { summarize } from '../src/summary.js';
+import { writeOutputAtomic } from '../src/write-output.js';
 
 function parseArgs(argv) {
   const out = { _: [], flags: {} };
@@ -124,7 +125,6 @@ async function cmdFix(args) {
     expectedOrder,
     summary
   });
-  fs.writeFileSync(out, result.html);
 
   const preserved = textPreserved(html, result.html);
   printAudit(`before: ${file}`, result.before);
@@ -150,6 +150,8 @@ async function cmdFix(args) {
     console.log(`\nFAIL: minimum contrast after remediation is ${fmtRatio(result.after.summary.minContrast)}, below the ${REPAIR_TARGET}:1 target`);
     return 1;
   }
+  writeOutputAtomic(out, result.html);
+  console.log(`\nvalidated document written: ${out}`);
   return 0;
 }
 

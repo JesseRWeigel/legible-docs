@@ -89,6 +89,9 @@ test('the fingerprint refuses to emit output that carries a path', () => {
     for (const dir of ['corpus', 'scripts', 'src', 'src/html', 'src/pdf']) {
       fs.mkdirSync(path.join(tmp, dir), { recursive: true });
     }
+    // The temporary tree is outside the repository's ESM package scope. Declare its
+    // module type explicitly, including on Node 18 which does not infer ESM syntax.
+    fs.writeFileSync(path.join(tmp, 'package.json'), JSON.stringify({ type: 'module' }));
     for (const f of ['scripts/fingerprint.js', 'scripts/pathleak.js', 'src/audit.js', 'src/alt.js',
       'src/color.js', 'src/css.js', 'src/readingorder.js', 'src/remediate.js', 'src/repair.js',
       'src/style.js', 'src/summary.js', 'src/html/parse.js', 'src/html/serialize.js',

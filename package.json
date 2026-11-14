@@ -5,9 +5,10 @@
   "type": "module",
   "bin": { "legible": "./bin/legible.js" },
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/*.test.js",
     "verify": "bash scripts/verify.sh"
   },
+  "engines": { "node": ">=18" },
   "license": "MIT",
   "private": false
 }

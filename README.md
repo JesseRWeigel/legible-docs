@@ -44,6 +44,8 @@ wording is the thing being delivered. What changes is presentation:
 ## Running it
 
 No dependencies. Node 18 or newer and Python 3.10 or newer, both from the standard library only.
+The test workflow covers Node 18, 20, 22 and 24. Temporary JavaScript fixtures declare
+ESM explicitly rather than relying on newer Node versions to infer their module type.
 
 ```bash
 node bin/legible.js audit corpus/benefit-notice.html

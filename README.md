@@ -61,6 +61,12 @@ a temporary sibling and atomically renamed into place; write/rename errors retur
 and clean up staging files. The published file has owner-only permissions. This atomic
 replacement does not promise durability across power loss or preserve destination metadata.
 
+Layout tables with structural IDs, including enclosing layout tables when needed, are retained
+to avoid breaking fragment links or ID references. Layout tables containing a nested table
+that remains after inner layout fixes are also retained, so nested data rows are not copied
+twice. The report flags retained layout tables for manual reading-order review. Word
+preservation alone does not validate links or document semantics.
+
 The plain language summary needs a local Ollama running, and is off unless asked for:
 
 ```bash
@@ -183,15 +189,10 @@ passing check are indistinguishable in a log a week later.
 
 ## Status
 
-2026-11-13: the CLI output-publication fix passes the unit suite and all four
-corpus audit/fix/re-audit flows, including independent measurement and privacy
-checks. The full verification run exits 1: 36 checks passed, but the browser check
-could not launch Chromium in the restricted runner (socket creation denied).
+2026-11-15: the layout-anchor and nested-table fixes pass all 150 Node tests and
+isolated CLI smoke tests. The restricted runner's earlier
+full-verification attempt stopped at Chromium launch (socket creation denied).
 Browser/extension verification is **not** claimed for this revision.
-
-```text
-  ok   146 tests ran, above the floor of 120
-```
 
 The following is the historical 2026-08-06 verification record, not a new run:
 

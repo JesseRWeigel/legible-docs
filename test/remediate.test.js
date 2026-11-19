@@ -187,3 +187,103 @@ test('a document with no faults is reported as needing no colour changes', () =>
   const moved = result.report.colorRepairs.filter((r) => r.changed);
   assert.equal(moved.length, 0, `changed ${moved.length} colours in a document that already passed`);
 });
+
+test('layout remediation retains structural fragment targets and reports the reading-order limit', () => {
+  const input = `<html lang="en"><head><title>Schedule</title></head><body><main>
+    <h1>Schedule</h1><p><a href="#deadline">Jump to deadline</a></p>
+    <table id="schedule"><tbody><tr id="dates"><td id="deadline">
+      <p>Deadline November 30 at 5 p.m.</p></td><td><p>Office hours</p></td></tr>
+      <tr><td><p>Bring your form.</p></td><td><p>Call first.</p></td></tr></tbody></table>
+    </main></body></html>`;
+  const result = remediateHTML(input);
+  const output = parseHTML(result.html);
+  assert.equal(byTag(output, 'a').find((node) => node.attrs.href === '#deadline').attrs.href, '#deadline');
+  for (const [tag, id] of [['table', 'schedule'], ['tr', 'dates'], ['td', 'deadline']]) {
+    assert.equal(byTag(output, tag).filter((node) => node.attrs.id === id).length, 1);
+  }
+  assert.match(textContent(byTag(output, 'td')[0]), /Deadline November 30 at 5 p\.m\./);
+  assert.equal(textPreserved(input, result.html).preserved, true);
+  assert.equal(result.report.layoutTablesRetainedForAnchors, 1);
+  assert.equal(result.report.layoutTablesUnwrapped, 0);
+  assert.match(result.report.actions.join('\n'), /preserve structural IDs; review reading order manually/);
+
+  // IDs on the moved contents already survive; do not disable ordinary layout repair.
+  const ordinary = input.replace(' id="schedule"', '').replace(' id="dates"', '')
+    .replace('<td id="deadline">', '<td>').replace('<p>Deadline', '<p id="deadline">Deadline');
+  const repaired = remediateHTML(ordinary);
+  assert.equal(repaired.report.layoutTablesUnwrapped, 1);
+  assert.equal(repaired.report.layoutTablesRetainedForAnchors, 0);
+  assert.equal(byTag(parseHTML(repaired.html), 'p').filter((node) => node.attrs.id === 'deadline').length, 1);
+});
+
+test('a retained nested table preserves its anchor and deadline exactly once', () => {
+  const input = `<html lang="en"><head><title>Schedule</title></head><body><main>
+    <h1>Schedule</h1><p><a href="#dates">Jump to dates</a></p>
+    <table role="presentation"><tr><td>Outer left
+      <table role="presentation"><tbody id="dates"><tr><td>Deadline November 30 at 5 p.m.</td>
+      <td>Inner right</td></tr></tbody></table>
+    </td><td>Outer right</td></tr><tr><td>Bottom left</td><td>Bottom right</td></tr></table>
+  </main></body></html>`;
+  const result = remediateHTML(input);
+  const output = parseHTML(result.html);
+  assert.equal(byTag(output, 'a').filter((node) => node.attrs.href === '#dates').length, 1);
+  const target = byTag(output, 'tbody').filter((node) => node.attrs.id === 'dates');
+  assert.equal(target.length, 1);
+  assert.match(textContent(target[0]), /Deadline November 30 at 5 p\.m\./);
+  assert.equal((result.html.match(/Deadline November 30 at 5 p\.m\./g) || []).length, 1);
+  assert.equal(byTag(output, 'table').length, 2);
+  assert.equal(result.report.layoutTablesRetainedForAnchors, 2);
+  assert.equal(result.report.layoutTablesUnwrapped, 0);
+
+  // A semantic table can be protected even though it is not an unwrap candidate.
+  const semantic = input.replace('<table role="presentation"><tbody', '<table><tbody')
+    .replace('<td>Inner right</td>', '<th>Inner right</th>');
+  const semanticResult = remediateHTML(semantic);
+  const semanticOutput = parseHTML(semanticResult.html);
+  assert.equal(byTag(semanticOutput, 'tbody').filter((node) => node.attrs.id === 'dates').length, 1);
+  assert.equal((semanticResult.html.match(/Deadline November 30 at 5 p\.m\./g) || []).length, 1);
+  assert.equal(byTag(semanticOutput, 'table').length, 2);
+  assert.equal(semanticResult.report.layoutTablesRetainedForAnchors, 1);
+});
+
+test('layout remediation does not copy surviving unanchored nested data cells twice', () => {
+  const input = `<html lang="en"><head><title>Registration</title></head><body>
+    <h1>Registration</h1>
+    <table role="presentation"><tr><td><p>Registration schedule:</p>
+      <table><caption>Session dates</caption><thead><tr><th scope="col">Session</th>
+      <th scope="col">Date</th></tr></thead><tbody><tr><td>Application deadline</td>
+      <td>November 30 at 5 PM</td></tr></tbody></table></td>
+      <td><p>Contact the office.</p></td></tr></table>
+    <table role="none"><tr><td><p>Other location</p></td><td><p>Other contact</p></td></tr></table>
+  </body></html>`;
+  const result = remediateHTML(input);
+  const output = parseHTML(result.html);
+  for (const wording of ['November 30 at 5 PM', 'Application deadline', 'Registration schedule:',
+    'Contact the office.', 'Other location', 'Other contact']) {
+    assert.equal(result.html.split(wording).length - 1, 1, wording);
+  }
+  const [outer, data] = byTag(output, 'table');
+  assert.equal(byTag(output, 'table').length, 2);
+  assert.equal(outer.attrs.role, 'presentation');
+  assert.equal(byTag(outer, 'table')[1], data);
+  assert.equal(textContent(byTag(data, 'caption')[0]), 'Session dates');
+  assert.deepEqual(byTag(data, 'th').map((header) => header.attrs.scope), ['col', 'col']);
+  assert.equal(result.report.layoutTablesRetainedForAnchors, 0);
+  assert.equal(result.report.layoutTablesRetainedForNestedTables, 1);
+  assert.equal(result.report.layoutTablesUnwrapped, 1);
+  assert.match(result.report.actions.join('\n'), /preserve nested tables; review reading order manually/);
+});
+
+test('layout-only nested tables still unwrap from the inside out', () => {
+  const input = `<html lang="en"><head><title>Example</title></head><body>
+    <table role="presentation"><tr><td><table role="none"><tr><td>Nested left</td>
+    <td>Nested right</td></tr></table></td><td>Outer right</td></tr></table>
+  </body></html>`;
+  const result = remediateHTML(input);
+  assert.equal(byTag(parseHTML(result.html), 'table').length, 0);
+  for (const wording of ['Nested left', 'Nested right', 'Outer right']) {
+    assert.equal(result.html.split(wording).length - 1, 1, wording);
+  }
+  assert.equal(result.report.layoutTablesRetainedForNestedTables, 0);
+  assert.equal(result.report.layoutTablesUnwrapped, 2);
+});

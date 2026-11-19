@@ -23,3 +23,24 @@ jobs:
       - name: Verify exact CLI revisions in the standard hosted browser
         shell: bash
         run: bash tools/legible-browser-acceptance/run.sh
+      - name: Run the complete repository verification without deploying
+        shell: bash
+        run: |
+          set -euo pipefail
+          tmp="$(mktemp -d)"
+          trap 'git worktree remove --force "$tmp/candidate"; rm -rf "$tmp"' EXIT
+          git worktree add --detach "$tmp/candidate" ef40527882beb8814b398f329b9c9509a5570906
+          export LEGIBLE_SYSTEM_CHROME="$(command -v google-chrome)"
+          export LEGIBLE_CHROME="$tmp/sandboxed-chrome"
+          cat >"$LEGIBLE_CHROME" <<'CHROME'
+          #!/usr/bin/env bash
+          set -euo pipefail
+          args=()
+          for arg in "$@"; do
+            if [[ "$arg" != --no-sandbox ]]; then args+=("$arg"); fi
+          done
+          exec "$LEGIBLE_SYSTEM_CHROME" "${args[@]}"
+          CHROME
+          chmod +x "$LEGIBLE_CHROME"
+          cd "$tmp/candidate"
+          bash scripts/verify.sh

@@ -29,7 +29,7 @@ jobs:
           set -euo pipefail
           tmp="$(mktemp -d)"
           trap 'git worktree remove --force "$tmp/candidate"; rm -rf "$tmp"' EXIT
-          git worktree add --detach "$tmp/candidate" ef40527882beb8814b398f329b9c9509a5570906
+          git worktree add --detach "$tmp/candidate" f2634bca041d7a034245e9d784ebbfeb2a665ca1
           export LEGIBLE_SYSTEM_CHROME="$(command -v google-chrome)"
           export LEGIBLE_CHROME="$tmp/sandboxed-chrome"
           cat >"$LEGIBLE_CHROME" <<'CHROME'

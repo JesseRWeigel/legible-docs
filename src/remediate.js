@@ -136,14 +136,37 @@ function convertLegacyTags(root) {
 
 function unwrapLayoutTables(root) {
   const actions = [];
-  let tables = byTag(root, 'table').filter(isLayoutTable);
+  let skippedForAnchors = 0;
+  let skippedForNested = 0;
+  const allTables = byTag(root, 'table');
+  // A table's own structural wrappers disappear during unwrapping. An ID on
+  // moved cell contents survives, but a protected inner table also needs all
+  // enclosing layout tables retained: their grid walk visits nested rows.
+  const hasStructuralId = (node) => {
+    if (node.type !== 'element') return false;
+    if (node.attrs.id) return true;
+    if (node.tag === 'td' || node.tag === 'th') return false;
+    return node.children.some(hasStructuralId);
+  };
+  const protectedTables = new Set();
+  for (const table of allTables) {
+    if (!hasStructuralId(table)) continue;
+    for (let ancestor = table; ancestor; ancestor = ancestor.parent) {
+      if (ancestor.tag === 'table') protectedTables.add(ancestor);
+    }
+  }
   // Innermost first, so a layout table nested inside another is handled before its parent
   // disappears from the tree.
-  tables = tables.sort((a, b) => {
+  const tables = allTables.filter(isLayoutTable).sort((a, b) => {
     const depth = (n) => { let d = 0; let p = n.parent; while (p) { d += 1; p = p.parent; } return d; };
     return depth(b) - depth(a);
   });
   for (const table of tables) {
+    if (protectedTables.has(table)) { skippedForAnchors += 1; continue; }
+    // Some inner tables (e.g., semantic data tables) are not unwrapped at all.
+    // The recursive grid would copy their rows as extra siblings. Keep the
+    // outer layout, and allow nested layouts already unwrapped above to move.
+    if (byTag(table, 'table').length > 1) { skippedForNested += 1; continue; }
     const cells = columnMajorCells(table);
     if (cells.length === 0) continue;
     const container = element('div', { class: 'lgb-unwrapped' });
@@ -160,7 +183,7 @@ function unwrapLayoutTables(root) {
     parent.children.splice(idx, 1, container);
     actions.push({ cells: cells.length });
   }
-  return actions;
+  return { actions, skippedForAnchors, skippedForNested };
 }
 
 const PROMOTABLE_BLOCKS = new Set(['p', 'div', 'span', 'section', 'header', 'b', 'strong', 'font']);
@@ -302,8 +325,10 @@ export function remediateHTML(html, options = {}) {
   if (removedStyleBlocks) actions.push(`removed ${removedStyleBlocks} author stylesheet block(s) that set the failing colours`);
   const converted = convertLegacyTags(root);
   if (converted) actions.push(`converted ${converted} presentational tag(s) such as <font> and <center>`);
-  const unwrapped = unwrapLayoutTables(root);
+  const { actions: unwrapped, skippedForAnchors, skippedForNested } = unwrapLayoutTables(root);
   if (unwrapped.length) actions.push(`unwrapped ${unwrapped.length} layout table(s) into column order sections`);
+  if (skippedForAnchors) actions.push(`retained ${skippedForAnchors} layout table(s) to preserve structural IDs; review reading order manually`);
+  if (skippedForNested) actions.push(`retained ${skippedForNested} layout table(s) to preserve nested tables; review reading order manually`);
   const { promoted, skipped: headingsNotPromoted } = promoteVisualHeadings(root, before);
   if (promoted.length) actions.push(`promoted ${promoted.length} visually styled line(s) to real headings`);
   if (headingsNotPromoted.length) actions.push(`left ${headingsNotPromoted.length} styled line(s) as text, promoting them would have changed the structure`);
@@ -426,6 +451,8 @@ export function remediateHTML(html, options = {}) {
       headingsPromoted: promoted,
       headingsNotPromoted,
       layoutTablesUnwrapped: unwrapped.length,
+      layoutTablesRetainedForAnchors: skippedForAnchors,
+      layoutTablesRetainedForNestedTables: skippedForNested,
       images: imageWork,
       summaryInserted,
       face,

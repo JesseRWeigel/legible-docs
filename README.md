@@ -189,10 +189,14 @@ passing check are indistinguishable in a log a week later.
 
 ## Status
 
-2026-11-15: the layout-anchor and nested-table fixes pass all 150 Node tests and
-isolated CLI smoke tests. The restricted runner's earlier
-full-verification attempt stopped at Chromium launch (socket creation denied).
-Browser/extension verification is **not** claimed for this revision.
+2026-11-19: the layout-anchor and nested-table fixes passed all 150 Node tests.
+A hosted Chrome check confirmed that the fragment link focuses its target,
+the keyboard order remains intact, and the nested data row appears once in
+Chrome's accessibility tree. This was not a manual screen-reader test.
+
+```text
+  ok   150 tests ran, above the floor of 120
+```
 
 The following is the historical 2026-08-06 verification record, not a new run:
 
